@@ -41,6 +41,12 @@ class resturant:
         except:
             pass
 
+    def read_from_google_dict(self, google_dict):
+        self.name = google_dict['name']
+        self.rating = google_dict['rating']
+        self.source = 'google'
+
+
     def read_from_cache_dict(self, cache_dict):
         self.name = cache_dict['name']
         self.type = cache_dict['type']
@@ -204,7 +210,27 @@ def get_resturants_from_yelp(city, food_type):
 
     return result_obj_list
 
-##todo: add open table and google places to get new data
+def get_resturants_using_google_places(city, food_type):
+    search_url = 'https://maps.googleapis.com/maps/api/place/textsearch/json'
+    search_text = city + "+" + food_type
+    params = {'query': search_text, 'type':'resturant', 'key': secrets.google_places_key}
+
+    search = requests.get(search_url, params)
+    result_format = json.loads(search.text)
+    search_results = result_format['results']
+
+
+    result_obj_list = []
+    for result in search_results:
+        r = resturant()
+        r.read_from_google_dict(result)
+        r.location = city
+        r.type = food_type
+        result_obj_list.append(r)
+
+    return result_obj_list
+
+##todo: add open table to get new data
 def get_resturants_using_cache(city, food_type):
     resturant_list = []
     unique_id = city + "_" + food_type.lower()
@@ -220,7 +246,8 @@ def get_resturants_using_cache(city, food_type):
     else:
         print("Getting new data... ")
         resturant_list = get_resturants_from_yelp(city, food_type.lower())
-        #todo: add Opentable and google places review
+        resturant_list.append(get_resturants_using_google_places(city, food_type))
+        #todo: add Opentable
         resturant_dict_list = []
         for r in resturant_list:
             r_dict = r.write_to_cache_dict()
@@ -236,10 +263,7 @@ def get_resturants_using_cache(city, food_type):
 
 init_db(db_name)
 
-list = get_resturants_using_cache("Detroit", "italian")
-
-insert_resturants_to_db(list)
-
+list = get_resturants_using_google_places("Detroit", "italian")
 
 
 
