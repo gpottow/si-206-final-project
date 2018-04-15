@@ -110,6 +110,7 @@ def init_db(db_name):
                                 'Id' INTEGER PRIMARY KEY AUTOINCREMENT,
                                 'Name' TEXT,
                                 'Type' TEXT,
+                                'Rating' FLOAT,
                                 'Location' INTEGER,
                                 'Source' INTEGER) """
         cur.execute(create_resturants)
@@ -178,9 +179,9 @@ def insert_resturants_to_db(resturant_list):
             city_id = cur.execute(statement, values).fetchone()[0]
 
             statement = """ INSERT INTO resturants
-                            ("Name", "Type", "Location", "Source")
-                            VALUES (?, ?, ?, ?)"""
-            insertion = (resturant.name, resturant.type, city_id, source_id)
+                            ("Name", "Type", "Rating", "Location", "Source")
+                            VALUES (?, ?, ?, ?, ?)"""
+            insertion = (resturant.name, resturant.type, resturant.rating, city_id, source_id)
 
             cur.execute(statement, insertion)
 
@@ -230,6 +231,13 @@ def get_resturants_using_google_places(city, food_type):
 
     return result_obj_list
 
+
+#uses unofficial api
+def get_resturants_using_open_table(city, food_type):
+    base_url = 'https://opentable.herokuapp.com/api/restaurants'
+    params = {'city':city, }
+    pass
+
 ##todo: add open table to get new data
 def get_resturants_using_cache(city, food_type):
     resturant_list = []
@@ -246,7 +254,9 @@ def get_resturants_using_cache(city, food_type):
     else:
         print("Getting new data... ")
         resturant_list = get_resturants_from_yelp(city, food_type.lower())
-        resturant_list.append(get_resturants_using_google_places(city, food_type))
+        google_list = get_resturants_using_google_places(city, food_type)
+        for g in google_list:
+            resturant_list.append(g)
         #todo: add Opentable
         resturant_dict_list = []
         for r in resturant_list:
@@ -261,9 +271,61 @@ def get_resturants_using_cache(city, food_type):
 
     return resturant_list
 
-init_db(db_name)
 
-list = get_resturants_using_google_places("Detroit", "italian")
+#get average raitngs
+#returns list where first item is yelp second is google
+def get_average_ratings_by_type(city, food_type):
+    conn = sqlite3.connect(db_name)
+    cur = conn.cursor()
+
+    #initizlize city id to impossible value
+    city_id = -1
+
+    #statement to find city_id
+    try:
+        statement = """SELECT Id
+                       FROM cities
+                       WHERE Name = (?) """
+
+        values = (city,)
+        city_id = cur.execute(statement,values).fetchone()[0]
+
+    except:
+        city_id = -1
+
+    statement = """SELECT count(*)
+                   FROM resturants
+                   WHERE Location = (?)
+                   AND Type = (?) """
+    values = (city_id, food_type)
+
+    if not cur.execute(statement,values).fetchone()[0]:
+        list = get_resturants_using_cache(city, food_type)
+        insert_resturants_to_db(list)
+
+    statement = """SELECT Id
+                   FROM cities
+                   WHERE Name = (?) """
+
+    values = (city,)
+    city_id = cur.execute(statement,values).fetchone()[0]
+
+    ratings_statement = """SELECT ROUND(AVG(Rating),2)
+                        FROM resturants
+                        WHERE Location = (?)
+                        GROUP BY Source
+                        ORDER BY Source"""
+
+    values = (city_id,)
+    cur.execute(ratings_statement, values)
+
+    average_ratings = []
+    for row in cur:
+        average_ratings.append(row)
+
+    return average_ratings
+
+
 
 
 
