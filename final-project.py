@@ -3,6 +3,8 @@ import json
 import secrets
 import sqlite3
 from requests_oauthlib import OAuth1Session
+import plotly.plotly as py
+import plotly.graph_objs as go
 
 db_name = 'resturants.db'
 
@@ -46,7 +48,6 @@ class resturant:
         self.rating = google_dict['rating']
         self.source = 'google'
 
-
     def read_from_cache_dict(self, cache_dict):
         self.name = cache_dict['name']
         self.type = cache_dict['type']
@@ -83,11 +84,10 @@ def init_db(db_name):
     statement += "type = 'table' AND name = 'resturants'"
 
     statement2 = "SELECT count(*) FROM sqlite_master WHERE "
-    statement2 +="type = 'table' AND name = 'cities'"
+    statement2 += "type = 'table' AND name = 'cities'"
 
     statement3 = "SELECT count(*) FROM sqlite_master WHERE "
     statement3 += "type = 'table' AND name = 'sources'"
-
 
     if not cur.execute(statement3).fetchone()[0]:
         create_sources = '''CREATE TABLE 'sources'(
@@ -132,27 +132,25 @@ def insert_resturants_to_db(resturant_list):
         statement = """SELECT count(*)
                        FROM cities
                        WHERE Name = (?) """
-        values = (resturant.location,)
+        values = (resturant.location, )
 
         #if city is not in db then add it
         if not cur.execute(statement, values).fetchone()[0]:
             statement = """ INSERT INTO cities
                             ("Name") VALUES (?)"""
-            insertion = (resturant.location,)
+            insertion = (resturant.location, )
             cur.execute(statement, insertion)
-
 
         #statement to check if source is already in db
         statement = """SELECT count(*)
                        FROM sources
                        WHERE Name = (?) """
-        values = (resturant.source,)
-
+        values = (resturant.source, )
 
         if not cur.execute(statement, values).fetchone()[0]:
             statement = """ INSERT INTO sources
                             ("Name") VALUES (?)"""
-            insertion = (resturant.source,)
+            insertion = (resturant.source, )
             cur.execute(statement, insertion)
 
         conn.commit()
@@ -160,7 +158,7 @@ def insert_resturants_to_db(resturant_list):
         statement = """ SELECT Id
                         FROM sources
                         WHERE Name = (?) """
-        values = (resturant.source,)
+        values = (resturant.source, )
         source_id = cur.execute(statement, values).fetchone()[0]
 
         #first check if entry is already in db
@@ -172,22 +170,22 @@ def insert_resturants_to_db(resturant_list):
 
         #if resturant is not in db, add to db
         if not cur.execute(statement, values).fetchone()[0]:
-            statement  = """SELECT Id
+            statement = """SELECT Id
                             FROM cities
                             WHERE Name = (?) """
-            values = (resturant.location,)
+            values = (resturant.location, )
             city_id = cur.execute(statement, values).fetchone()[0]
 
             statement = """ INSERT INTO resturants
                             ("Name", "Type", "Rating", "Location", "Source")
                             VALUES (?, ?, ?, ?, ?)"""
-            insertion = (resturant.name, resturant.type, resturant.rating, city_id, source_id)
+            insertion = (resturant.name, resturant.type, resturant.rating,
+                         city_id, source_id)
 
             cur.execute(statement, insertion)
 
     conn.commit()
     conn.close()
-
 
 
 #todo: impliment way of handling unsupported cateogries
@@ -211,15 +209,19 @@ def get_resturants_from_yelp(city, food_type):
 
     return result_obj_list
 
+
 def get_resturants_using_google_places(city, food_type):
     search_url = 'https://maps.googleapis.com/maps/api/place/textsearch/json'
     search_text = city + "+" + food_type
-    params = {'query': search_text, 'type':'resturant', 'key': secrets.google_places_key}
+    params = {
+        'query': search_text,
+        'type': 'resturant',
+        'key': secrets.google_places_key
+    }
 
     search = requests.get(search_url, params)
     result_format = json.loads(search.text)
     search_results = result_format['results']
-
 
     result_obj_list = []
     for result in search_results:
@@ -235,8 +237,11 @@ def get_resturants_using_google_places(city, food_type):
 #uses unofficial api
 def get_resturants_using_open_table(city, food_type):
     base_url = 'https://opentable.herokuapp.com/api/restaurants'
-    params = {'city':city, }
+    params = {
+        'city': city,
+    }
     pass
+
 
 ##todo: add open table to get new data
 def get_resturants_using_cache(city, food_type):
@@ -287,8 +292,8 @@ def get_average_ratings_by_type(city, food_type):
                        FROM cities
                        WHERE Name = (?) """
 
-        values = (city,)
-        city_id = cur.execute(statement,values).fetchone()[0]
+        values = (city, )
+        city_id = cur.execute(statement, values).fetchone()[0]
 
     except:
         city_id = -1
@@ -299,7 +304,7 @@ def get_average_ratings_by_type(city, food_type):
                    AND Type = (?) """
     values = (city_id, food_type)
 
-    if not cur.execute(statement,values).fetchone()[0]:
+    if not cur.execute(statement, values).fetchone()[0]:
         list = get_resturants_using_cache(city, food_type)
         insert_resturants_to_db(list)
 
@@ -307,8 +312,8 @@ def get_average_ratings_by_type(city, food_type):
                    FROM cities
                    WHERE Name = (?) """
 
-    values = (city,)
-    city_id = cur.execute(statement,values).fetchone()[0]
+    values = (city, )
+    city_id = cur.execute(statement, values).fetchone()[0]
 
     ratings_statement = """SELECT ROUND(AVG(Rating),2)
                         FROM resturants
@@ -316,7 +321,7 @@ def get_average_ratings_by_type(city, food_type):
                         GROUP BY Source
                         ORDER BY Source"""
 
-    values = (city_id,)
+    values = (city_id, )
     cur.execute(ratings_statement, values)
 
     average_ratings = []
@@ -325,9 +330,27 @@ def get_average_ratings_by_type(city, food_type):
 
     return average_ratings
 
+def plot_average_ratings_by_type(city, food_type):
+    ratings = get_average_ratings_by_type(city, food_type)
+    yelp_rating = ratings[0][0]
+    google_rating = ratings[1][0]
+    trace1 = go.Bar(
+             x = ["Yelp", "Google"],
+             y = [yelp_rating, google_rating],
+             name = "Average food Ratings for " + food_type + " food in " + city
+    )
+    data = [trace1]
+    layout = go.Layout(
+        title = "Average food ratings for " + food_type + " food in " + city,
+        yaxis = dict(
+            range=[2, 5]
+        ),
+        barmode='basic'
+    )
+    fig = go.Figure(data=data, layout=layout)
+    py.plot(fig, filename='grouped-bar')
 
-
-
+plot_average_ratings_by_type("Detroit", "italian")
 
 
 #here for spacing
