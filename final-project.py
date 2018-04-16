@@ -191,7 +191,7 @@ def insert_resturants_to_db(resturant_list):
             city_id = cur.execute(statement, values).fetchone()[0]
 
             statement = """ INSERT INTO resturants
-                            ("Name", "Type", "Rating", "Location", "Rating", "Source")
+                            ("Name", "Type", "Rating", "Location", "Price", "Source")
                             VALUES (?, ?, ?, ?, ?, ?)"""
             insertion = (resturant.name, resturant.type, resturant.rating,
                          city_id, resturant.price, source_id)
@@ -586,6 +586,51 @@ def get_all_ratings_for_city(city):
 
     return city_list
 
+def get_all_ratings_by_cost(city, cost):
+    conn = sqlite3.connect(db_name)
+    cur = conn.cursor()
+
+    #initizlize city id to impossible value
+    city_id = -1
+
+    #statement to find city_id
+    try:
+        statement = """SELECT Id
+                       FROM cities
+                       WHERE Name = (?) """
+
+        values = (city, )
+        city_id = cur.execute(statement, values).fetchone()[0]
+
+    except:
+        city_id = -1
+
+    if city_id == -1:
+        list = get_resturants_from_yelp(city, "ALL")
+        list.append(get_resturants_using_google_places(city, "*"))
+        insert_resturants_to_db(list)
+
+    statement = """SELECT Id
+                   FROM cities
+                   WHERE Name = (?) """
+
+    values = (city, )
+    city_id = cur.execute(statement, values).fetchone()[0]
+
+    ratings_statement = """SELECT Rating, resturants.Name
+                        FROM resturants
+                        WHERE Location = (?)
+                        AND Price = (?) """
+
+    values = (city_id, cost)
+    cur.execute(ratings_statement, values)
+
+    city_list = []
+    for row in cur:
+        city_list.append(row)
+
+    return city_list
+
 
 #plots scatterplot of all ratings by foodtype
 def plot_scatter_for_type(city, food_type):
@@ -678,7 +723,7 @@ def plot_average_ratings_by_type(city, food_type):
 
 
 init_db(db_name)
-
-plot_resturants_by_city("Detroit")
+list = get_resturants_using_cache("Detroit", "italian")
+insert_resturants_to_db(list)
 
 #here for spacing
