@@ -371,7 +371,7 @@ def get_specific_resturant_using_cache(city, food_type, resturant_name):
 
 #gets ratings for a specific restruant
 #reutrns list where first item is yelp and second is google
-def get_specific_resturant_rating(city, food_type, resturant_name):
+def get_specific_resturant_rating_by_source(city, food_type, resturant_name):
     conn = sqlite3.connect(db_name)
     cur = conn.cursor()
 
@@ -478,8 +478,85 @@ def get_average_ratings_by_type(city, food_type):
     return average_ratings
 
 
+def get_all_ratings_for_food_type(city, food_type):
+        conn = sqlite3.connect(db_name)
+        cur = conn.cursor()
+
+        #initizlize city id to impossible value
+        city_id = -1
+
+        #statement to find city_id
+        try:
+            statement = """SELECT Id
+                           FROM cities
+                           WHERE Name = (?) """
+
+            values = (city, )
+            city_id = cur.execute(statement, values).fetchone()[0]
+
+        except:
+            city_id = -1
+
+        statement = """SELECT count(*)
+                       FROM resturants
+                       WHERE Location = (?)
+                       AND Type = (?) """
+        values = (city_id, food_type)
+
+        if not cur.execute(statement, values).fetchone()[0]:
+            list = get_resturants_using_cache(city, food_type)
+            insert_resturants_to_db(list)
+
+        statement = """SELECT Id
+                       FROM cities
+                       WHERE Name = (?) """
+
+        values = (city, )
+        city_id = cur.execute(statement, values).fetchone()[0]
+
+        ratings_statement = """SELECT Rating, resturants.Name
+                            FROM resturants
+                            JOIN sources
+                            ON resturants.Source = sources.Id
+                            WHERE Location = (?) """
+
+        values = (city_id, )
+        cur.execute(ratings_statement, values)
+
+        city_list = []
+        for row in cur:
+            city_list.append(row)
+
+        return city_list
+
+#plots scatterplot of all ratings by foodtype
+def plot_scatter_for_type(city, food_type):
+    master_list = get_all_ratings_for_food_type(city, food_type)
+    rating_list = []
+    name_list = []
+    for place in master_list:
+        rating_list.append(place[0])
+        name_list.append(place[1])
+
+    trace = go.Scatter(
+        y = rating_list,
+        x = name_list,
+        mode = 'markers',
+    )
+    data = [trace]
+
+    layout = go.Layout(
+        title = "Ratings for " + food_type + " food in " + city
+    )
+    name = "Ratings for " + food_type + " food in " + city
+    fig = go.Figure(data=data, layout=layout)
+    py.plot(fig, filename=name)
+
+
+
+#plots average ratings from google and yelp for specific resturant
 def plot_specific_restruant_by_source(city, food_type, resturant_name):
-    ratings = get_specific_resturant_rating(city, food_type, resturant_name)
+    ratings = get_specific_resturant_rating_by_source(city, food_type, resturant_name)
 
     yelp_rating = ratings[0][0]
     google_rating = ratings[1][0]
@@ -496,8 +573,9 @@ def plot_specific_restruant_by_source(city, food_type, resturant_name):
         ),
         barmode='basic'
     )
+    name = "Average food ratings for " + resturant_name + " food in " + city
     fig = go.Figure(data=data, layout=layout)
-    py.plot(fig, filename='grouped-bar')
+    py.plot(fig, filename=name)
 
 
 #plots average ratings from google and yelp using plotly
@@ -523,8 +601,7 @@ def plot_average_ratings_by_type(city, food_type):
 
 init_db(db_name)
 
-plot_specific_restruant_by_source("Ann Arbor", "mexican", "Chipotle Mexican Grill")
-
+plot_scatter_for_type("Detroit", "italian")
 
 
 #here for spacing
