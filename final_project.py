@@ -631,7 +631,6 @@ def get_all_ratings_by_cost(city, cost):
 
     return city_list
 
-
 #plots scatterplot of all ratings by foodtype
 def plot_scatter_for_type(city, food_type):
     master_list = get_all_ratings_for_food_type(city, food_type)
