@@ -586,6 +586,7 @@ def get_all_ratings_for_city(city):
 
     return city_list
 
+
 def get_all_ratings_by_cost(city, cost):
     conn = sqlite3.connect(db_name)
     cur = conn.cursor()
@@ -631,6 +632,29 @@ def get_all_ratings_by_cost(city, cost):
 
     return city_list
 
+def plot_ratings_by_cost(city, cost):
+    master_list = get_all_ratings_by_cost(city, cost)
+    ratings_list = []
+    name_list = []
+    for place in master_list:
+        ratings_list.append(place[0])
+        name_list.append(place[1])
+
+    trace = go.Scatter(
+        y = ratings_list, text=name_list, mode='markers', hoverinfo='text'
+    )
+    data = [trace]
+
+    layout = go.Layout(
+        title="Ratings for food in " + city,
+        hovermode='closest',
+        yaxis=dict(range=[2, 5]))
+    name = "Ratings for food in " + city
+    fig = go.Figure(data=data, layout=layout)
+    py.plot(fig, filename=name)
+
+
+
 #plots scatterplot of all ratings by foodtype
 def plot_scatter_for_type(city, food_type):
     master_list = get_all_ratings_for_food_type(city, food_type)
@@ -641,16 +665,12 @@ def plot_scatter_for_type(city, food_type):
         name_list.append(place[1])
 
     trace = go.Scatter(
-        y=rating_list,
-        text=data[name_list],
-        mode='markers',
-        hoverinfo='text'
-    )
+        y=rating_list, text=name_list, mode='markers', hoverinfo='text')
     data = [trace]
 
     layout = go.Layout(
         title="Ratings for " + food_type + " food in " + city,
-        hovermode= 'closest',
+        hovermode='closest',
         yaxis=dict(range=[2, 5]))
     name = "Ratings for " + food_type + " food in " + city
     fig = go.Figure(data=data, layout=layout)
@@ -667,15 +687,13 @@ def plot_resturants_by_city(city):
         name_list.append(place[1])
 
     trace = go.Scatter(
-        y=rating_list,
-        text=name_list,
-        mode='markers',
-        hoverinfo='text'
-    )
+        y=rating_list, text=name_list, mode='markers', hoverinfo='text')
     data = [trace]
 
     layout = go.Layout(
-        title="Ratings for resturants in " + city, yaxis=dict(range=[2, 5]), hovermode='closest')
+        title="Ratings for resturants in " + city,
+        yaxis=dict(range=[2, 5]),
+        hovermode='closest')
     name = "Ratings for resturants in " + city
     fig = go.Figure(data=data, layout=layout)
     py.plot(fig, filename=name)
@@ -720,9 +738,6 @@ def plot_average_ratings_by_type(city, food_type):
     fig = go.Figure(data=data, layout=layout)
     py.plot(fig, filename='grouped-bar')
 
-
-init_db(db_name)
-list = get_resturants_using_cache("Detroit", "italian")
-insert_resturants_to_db(list)
+plot_ratings_by_cost("Detroit", 3)
 
 #here for spacing
