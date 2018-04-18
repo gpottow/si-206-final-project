@@ -1,5 +1,7 @@
 Commands available:
-    note: all inputs must be separated with double spaces
+    note: all inputs must be separated with DOUBLE SPACES
+    type 'exit' to exit
+
 
     average
       Description: graphs average yelp and google reviews for a city for a given
@@ -7,18 +9,18 @@ Commands available:
 
       parameters: city=<name> | food_type=<name> (optional)
 
-      example: average city=Detroit food_type=italian
+      example: average  city=Detroit  food_type=italian
 
     scatter
         Description: graphs all yelp and google reviews in scatter plot for defined parameters
 
         parameters: city=<name> | food_type=<name> (optional) | cost=<cost> (optional). Number 1-4 where 1 is least expensive
 
-        example: scatter city=Detroit cost=3
+        example: scatter  city=Detroit  cost=3
 
-    restaurant
+    specific
         Description: graphs yelp and google reviews for a specific restaurant
 
         parameters: city=<name> | food_type=<name> | name=<name>
 
-        example: restaurant city=New_York food_type=mexican name=Chipotle Mexican Grill
+        example: specific  city=Ann Arbor  food_type=mexican  name=Chipotle Mexican Grill

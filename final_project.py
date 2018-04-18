@@ -805,7 +805,7 @@ if __name__ == "__main__":
     help_text = load_help_text()
     response = ''
     while response != 'exit':
-        response = input('Enter a command: ')
+        response = input('Enter a command (type \'help\' for help): ')
 
         if response == 'help':
             print(help_text)
