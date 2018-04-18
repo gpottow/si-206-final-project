@@ -414,7 +414,7 @@ def get_specific_resturant_rating_by_source(city, food_type, resturant_name):
 
     statement = """SELECT Id
                    FROM cities
-                   WHERE Name = (?) """
+                   WHERE Name LIKE (?) """
 
     values = (city, )
     city_id = cur.execute(statement, values).fetchone()[0]
@@ -482,6 +482,7 @@ def get_average_ratings_by_type(city, food_type):
 
     values = (city_id, )
     cur.execute(ratings_statement, values)
+
 
     average_ratings = []
     for row in cur:
@@ -728,6 +729,7 @@ def plot_average_ratings_by_type(city, food_type):
     ratings = get_average_ratings_by_type(city, food_type)
     yelp_rating = ratings[0][0]
     google_rating = ratings[1][0]
+
     trace1 = go.Bar(
         x=["Yelp", "Google"],
         y=[yelp_rating, google_rating],
@@ -746,28 +748,27 @@ def load_help_text():
 
 
 def process_command(command):
-    command_master = command.split(' ', 1)[0]
+    command_master = command.split('  ', 1)[0]
 
     if command_master == "average":
-        command_sub = command.split(' ')
+        command_sub = command.split('  ')
 
         for item in command_sub:
             if "city" in item:
-                c = item.split('=')[1]
+                c = item.split('=')[1].title()
             if "food_type" in item:
-                f_t = item.split('=')[1]
+                f_t = item.split('=')[1].lower()
 
-        try:
-            plot_average_ratings_by_type(c, f_t)
-        except:
-            print("error processing command")
+
+        plot_average_ratings_by_type(c, f_t)
+
 
     if command_master == 'scatter':
-        command_sub = command.split(' ')
+        command_sub = command.split('  ')
 
         for item in command_sub:
             if "city" in item:
-                c = item.split('=')[1]
+                c = item.split('=')[1].title()
 
         for item in command_sub:
             if "food_type" in item:
@@ -781,15 +782,15 @@ def process_command(command):
 
         plot_resturants_by_city(c)
 
-    if command_master == 'restaurant':
-        commad_sub = command.split(' ')
+    if command_master == 'specific':
+        command_sub = command.split('  ')
 
         for item in command_sub:
             if "city" in item:
-                city = item.split('=')[1]
+                city = item.split('=')[1].title()
 
             if "food_type" in item:
-                f_t = item.split('=')[1]
+                f_t = item.split('=')[1].lower()
 
             if "name" in item:
                 name = item.split('=')[1]
@@ -797,8 +798,10 @@ def process_command(command):
         plot_specific_restruant_by_source(city, f_t, name)
 
 
- #Make sure nothing runs or prints out when this file is run as a module
+
+# Make sure nothing runs or prints out when this file is run as a module
 if __name__ == "__main__":
+    init_db(db_name)
     help_text = load_help_text()
     response = ''
     while response != 'exit':

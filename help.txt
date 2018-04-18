@@ -1,4 +1,6 @@
 Commands available:
+    note: all inputs must be separated with double spaces
+
     average
       Description: graphs average yelp and google reviews for a city for a given
       type of food
@@ -12,7 +14,11 @@ Commands available:
 
         parameters: city=<name> | food_type=<name> (optional) | cost=<cost> (optional). Number 1-4 where 1 is least expensive
 
+        example: scatter city=Detroit cost=3
+
     restaurant
         Description: graphs yelp and google reviews for a specific restaurant
 
-        parameters: city=<name> | food_type=<name> | name=<name> 
+        parameters: city=<name> | food_type=<name> | name=<name>
+
+        example: restaurant city=New_York food_type=mexican name=Chipotle Mexican Grill
