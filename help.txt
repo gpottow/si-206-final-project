@@ -14,3 +14,5 @@ Commands available:
 
     restaurant
         Description: graphs yelp and google reviews for a specific restaurant
+
+        parameters: city=<name> | food_type=<name> | name=<name> 
