@@ -1,1 +1,16 @@
-Commands available: 
+Commands available:
+    average
+      Description: graphs average yelp and google reviews for a city for a given
+      type of food
+
+      parameters: city=<name> | food_type=<name> (optional)
+
+      example: average city=Detroit food_type=italian
+
+    scatter
+        Description: graphs all yelp and google reviews in scatter plot for defined parameters
+
+        parameters: city=<name> | food_type=<name> (optional) | cost=<cost> (optional). Number 1-4 where 1 is least expensive
+
+    restaurant
+        Description: graphs yelp and google reviews for a specific restaurant

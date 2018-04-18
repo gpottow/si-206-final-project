@@ -632,6 +632,8 @@ def get_all_ratings_by_cost(city, cost):
 
     return city_list
 
+
+#plots scatter plot of all ratings of a given cost
 def plot_ratings_by_cost(city, cost):
     master_list = get_all_ratings_by_cost(city, cost)
     ratings_list = []
@@ -738,6 +740,80 @@ def plot_average_ratings_by_type(city, food_type):
     fig = go.Figure(data=data, layout=layout)
     py.plot(fig, filename='grouped-bar')
 
-plot_ratings_by_cost("Detroit", 3)
+def load_help_text():
+    with open('help.txt') as f:
+        return f.read()
+
+
+def process_command(command):
+    command_master = command.split(' ', 1)[0]
+
+    if command_master == "average":
+        command_sub = command.split(' ')
+
+        for item in command_sub:
+            if "city" in item:
+                c = item.split('=')[1]
+            if "food_type" in item:
+                f_t = item.split('=')[1]
+
+        try:
+            plot_average_ratings_by_type(c, f_t)
+        except:
+            print("error processing command")
+
+    if command_master == 'scatter':
+        command_sub = command.split(' ')
+
+        for item in command_sub:
+            if "city" in item:
+                c = item.split('=')[1]
+
+        for item in command_sub:
+            if "food_type" in item:
+                f_t = item.split('=')[1]
+                plot_scatter_for_type(c, f_t)
+
+        for item in command_sub:
+            if "cost" in item:
+                cost = item.split('=')[1]
+                plot_ratings_by_cost(c, cost)
+
+        plot_resturants_by_city(c)
+
+    if command_master == 'restaurant':
+        commad_sub = command.split(' ')
+
+        for item in command_sub:
+            if "city" in item:
+                city = item.split('=')[1]
+
+            if "food_type" in item:
+                f_t = item.split('=')[1]
+
+            if "name" in item:
+                name = item.split('=')[1]
+
+        plot_specific_restruant_by_source(city, f_t, name)
+
+
+ #Make sure nothing runs or prints out when this file is run as a module
+if __name__ == "__main__":
+    help_text = load_help_text()
+    response = ''
+    while response != 'exit':
+        response = input('Enter a command: ')
+
+        if response == 'help':
+            print(help_text)
+            continue
+
+        try:
+            process_command(response)
+
+        except:
+            print("Error processing command")
+
+
 
 #here for spacing
