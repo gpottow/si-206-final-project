@@ -765,6 +765,7 @@ def process_command(command):
 
     if command_master == 'scatter':
         command_sub = command.split('  ')
+        z=1
 
         for item in command_sub:
             if "city" in item:
@@ -774,13 +775,16 @@ def process_command(command):
             if "food_type" in item:
                 f_t = item.split('=')[1]
                 plot_scatter_for_type(c, f_t)
+                z = 0
 
         for item in command_sub:
             if "cost" in item:
                 cost = item.split('=')[1]
                 plot_ratings_by_cost(c, cost)
+                z = 0
 
-        plot_resturants_by_city(c)
+        if z:
+            plot_resturants_by_city(c)
 
     if command_master == 'specific':
         command_sub = command.split('  ')
